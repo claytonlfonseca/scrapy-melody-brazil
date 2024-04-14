@@ -3,15 +3,25 @@
 import scrapy
 from scrapy.crawler import CrawlerProcess
 
+def main():
+    #Exporta o relatório em XLSx chamando o Spider
+    process = CrawlerProcess()
+
+    #Chama a classe Melody que contem o Spider
+    process.crawl(Melody)
+    process.start()
+
 class Melody(scrapy.Spider):
     name = 'melody'
  
     def __init__(self):
         self.start_url = "https://www.melodybrazil.com/"
 
+    #Realiza requisição a partir da variável START_URL
     def start_requests(self):
         yield scrapy.Request(self.start_url)
-
+    
+    #Faz o parse da página html requisitada
     def parse(self, response, **kwargs):  
         tags = response.xpath('//div[@class="post-info"]')
 
@@ -32,7 +42,7 @@ class Melody(scrapy.Spider):
                 'pub_by': pub_by,
                 'url_down': url_down
             }   
-            #Pega a data e hora do último CD publicado para montar próxima URL
+            #Data e hora do último CD de cada página para montar próxima URL
             next = tag.xpath('.//time[@class="post-datepublished"]').get()      
         
         #Montando URL para próxima requisição.
@@ -47,10 +57,3 @@ class Melody(scrapy.Spider):
         yield scrapy.Request("https://www.melodybrazil.com/search?updated-max="+(date_pg)+"T"+(time_pg)+"-03:00", dont_filter = True, callback=self.parse)
         print("---------------------------------------------------------------")
 
-#Exporta o relatório em CSV chamando o Spider
-process = CrawlerProcess(settings= {
-    'FEED_URI' : 'report_melodybrazil.csv',
-    'FEED_FORMAT' : 'csv'
-})
-process.crawl(Melody)
-process.start()
